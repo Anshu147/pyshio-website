@@ -1,6 +1,7 @@
 """SQLite connection helpers and schema."""
 import sqlite3
 from contextlib import contextmanager
+from pathlib import Path
 
 from shared import settings
 
@@ -137,7 +138,15 @@ CREATE INDEX IF NOT EXISTS idx_doctors_status_city ON doctors(status, city);
 
 @contextmanager
 def get_db():
-    conn = sqlite3.connect(settings.DB_PATH, timeout=10, isolation_level=None)
+    try:
+        Path(settings.DB_PATH).parent.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass
+    try:
+        conn = sqlite3.connect(settings.DB_PATH, timeout=10, isolation_level=None)
+    except sqlite3.OperationalError:
+        fallback = str(settings.BASE_DIR / "pyshio.db")
+        conn = sqlite3.connect(fallback, timeout=10, isolation_level=None)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     try:

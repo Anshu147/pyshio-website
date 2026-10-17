@@ -13,7 +13,19 @@ load_env(os.environ.get("PYSHIO_ENV_FILE", BASE_DIR / ".env"))
 
 PLATFORM_NAME = os.environ.get("PYSHIO_PLATFORM_NAME", "Pyshio")
 SITE_URL = os.environ.get("PYSHIO_SITE_URL", "").rstrip("/")
-DB_PATH = os.environ.get("PYSHIO_DB", str(BASE_DIR / "pyshio.db"))
+def _resolve_db_path() -> str:
+    val = os.environ.get("PYSHIO_DB")
+    if val:
+        p = Path(val)
+        try:
+            p.parent.mkdir(parents=True, exist_ok=True)
+            return str(p)
+        except OSError:
+            pass
+    return str(BASE_DIR / "pyshio.db")
+
+
+DB_PATH = _resolve_db_path()
 
 # Hosting servers (e.g. GoDaddy) usually run on US time; all scheduling uses this zone.
 TIMEZONE = ZoneInfo(os.environ.get("PYSHIO_TIMEZONE", "Asia/Kolkata"))
@@ -88,7 +100,19 @@ def online_payments_enabled() -> bool:
     return bool(RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET)
 
 # Labs & health records
-UPLOAD_DIR = os.environ.get("PYSHIO_UPLOAD_DIR", str(BASE_DIR / "uploads"))  # private: served only through the API
+def _resolve_upload_dir() -> str:
+    val = os.environ.get("PYSHIO_UPLOAD_DIR")
+    if val:
+        p = Path(val)
+        try:
+            p.mkdir(parents=True, exist_ok=True)
+            return str(p)
+        except OSError:
+            pass
+    return str(BASE_DIR / "uploads")
+
+
+UPLOAD_DIR = _resolve_upload_dir()
 MAX_UPLOAD_MB = 10
 LAB_REMIND_MINUTES = 60            # remind a lab about a booking it hasn't accepted yet
 # Anonymous doctors in pharma insights: a category in a city needs at least this many doctors to be listed
