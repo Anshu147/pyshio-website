@@ -195,6 +195,11 @@ def ensure_admin() -> None:
                 "INSERT INTO users (role, name, email, password_hash, created_at) VALUES ('admin', 'Administrator', ?, ?, ?)",
                 (settings.ADMIN_EMAIL, hash_password(settings.ADMIN_PASSWORD), _stamp(settings.now()))
             )
+        else:
+            conn.execute(
+                "UPDATE users SET password_hash = ? WHERE id = ? AND role = 'admin'",
+                (hash_password(settings.ADMIN_PASSWORD), exists["id"])
+            )
 
 
 # ---------- Doctor portal ----------
